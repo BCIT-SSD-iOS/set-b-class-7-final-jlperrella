@@ -13,6 +13,7 @@ import Vision
 class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDelegate {
 
   @IBOutlet weak var objectLabel: UILabel!
+  
   override func viewDidLoad() {
     super.viewDidLoad()
     
@@ -23,11 +24,9 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
     captureSession.sessionPreset = .photo
     
     guard let captureDevice = AVCaptureDevice.default(for: .video) else { return }
-    
     guard let input = try? AVCaptureDeviceInput(device: captureDevice) else { return }
    
     captureSession.addInput(input)
-    
     captureSession.startRunning()
     
     let previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
@@ -51,21 +50,22 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
     guard let model = try? VNCoreMLModel(for: Resnet50().model) else {return}
     let request = VNCoreMLRequest(model: model){
       (finishedReq, err) in
+      
       // check error
      // print (finishedReq.results)
       
       guard let result = finishedReq.results as? [VNClassificationObservation] else {return}
-      
       guard let firstObservation = result.first else { return }
-      
       print(firstObservation.identifier, firstObservation.confidence)
-      self.objectLabel.text = firstObservation.identifier
+      
+      DispatchQueue.main.async {
+        self.objectLabel.text = "\(firstObservation.identifier) %\((firstObservation.confidence * 100).rounded())"
+      }
       
     }
-    
-    try? VNImageRequestHandler(cvPixelBuffer: pixelBuffer, options: [:]).perform([request])
-    objectLabel.text = self.objectLabel.text
-  }
 
+    try? VNImageRequestHandler(cvPixelBuffer: pixelBuffer, options: [:]).perform([request])
+  }
+  
 }
 
